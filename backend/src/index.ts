@@ -2,6 +2,7 @@ import "dotenv/config";
 import express, { NextFunction, Request, Response } from "express";
 import session from "cookie-session";
 import cors from "cors";
+import passport from "passport";
 
 import { config } from "./config/app.config";
 import connectDB from "./config/db.config";
@@ -10,6 +11,9 @@ import { asyncHandler } from "./middlewares/asyncHandler.middleware";
 import { BadRequestException } from "./utils/appError";
 import { HTTPSTATUS } from "./config/http.config";
 import { ErrorCodeEnum } from "./enums/error-code.enum";
+
+import "./config/passport.config"; // Passport config
+import authRoutes from "./routes/auth.route";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -28,6 +32,9 @@ app.use(
     sameSite: "lax",
   })
 );
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use(
   cors({
@@ -51,6 +58,8 @@ app.get(
     });
   })
 );
+
+app.use(`${BASE_PATH}/auth`, authRoutes);
 
 app.use(errorHandler);
 
