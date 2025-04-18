@@ -1,10 +1,15 @@
 import "dotenv/config";
-import express, { Request, Response } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import session from "cookie-session";
 import cors from "cors";
 
 import { config } from "./config/app.config";
 import connectDB from "./config/db.config";
+import { errorHandler } from "./middlewares/errorHandler.middleware";
+import { asyncHandler } from "./middlewares/asyncHandler.middleware";
+import { BadRequestException } from "./utils/appError";
+import { HTTPSTATUS } from "./config/http.config";
+import { ErrorCodeEnum } from "./enums/error-code.enum";
 
 const app = express();
 const BASE_PATH = config.BASE_PATH;
@@ -31,9 +36,23 @@ app.use(
   })
 );
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello World!");
-});
+// asyncHandler
+app.get(
+  "/",
+  asyncHandler((req: Request, res: Response, next: NextFunction) => {
+    throw new BadRequestException(
+      "This is bad request",
+      ErrorCodeEnum.AUTH_INVALID_TOKEN
+    ); // Simulate an error for testing
+
+    res.status(HTTPSTATUS.OK).json({
+      message: "Hello World",
+      data: "This is data",
+    });
+  })
+);
+
+app.use(errorHandler);
 
 app.listen(config.PORT, async () => {
   console.log(
