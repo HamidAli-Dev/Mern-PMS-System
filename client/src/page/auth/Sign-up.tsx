@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -21,8 +21,18 @@ import {
 import { Input } from "@/components/ui/input";
 import Logo from "@/components/logo";
 import GoogleOauthButton from "@/components/auth/google-oauth-button";
+import { useMutation } from "@tanstack/react-query";
+import { registerMutationFn } from "@/lib/api";
+import { Loader } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 const SignUp = () => {
+  const navigate = useNavigate();
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: registerMutationFn,
+  });
+
   const formSchema = z.object({
     name: z.string().trim().min(1, {
       message: "Name is required",
@@ -45,19 +55,29 @@ const SignUp = () => {
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log(values);
+    if (isPending) return;
+
+    mutate(values, {
+      onSuccess: () => {
+        navigate("/");
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      },
+    });
   };
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <Link
-          to="/"
-          className="flex items-center gap-2 self-center font-medium"
-        >
+        <div className="flex items-center gap-2 self-center font-medium">
+          <Link to="/">Team Sync.</Link>
           <Logo />
-          Team Sync.
-        </Link>
+        </div>
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader className="text-center">
@@ -145,7 +165,12 @@ const SignUp = () => {
                           )}
                         />
                       </div>
-                      <Button type="submit" className="w-full">
+                      <Button
+                        type="submit"
+                        disabled={isPending}
+                        className="w-full"
+                      >
+                        {isPending && <Loader className="animate-spin" />}
                         Sign up
                       </Button>
                     </div>

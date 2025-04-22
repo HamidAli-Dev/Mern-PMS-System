@@ -1,8 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { Loader } from "lucide-react";
+
 import {
   Card,
   CardContent,
@@ -21,8 +23,19 @@ import {
 import { Input } from "@/components/ui/input";
 import Logo from "@/components/logo";
 import GoogleOauthButton from "@/components/auth/google-oauth-button";
+import { useMutation } from "@tanstack/react-query";
+import { loginMutationFn } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 
 const SignIn = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl");
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: loginMutationFn,
+  });
+
   const formSchema = z.object({
     email: z.string().trim().email("Invalid email address").min(1, {
       message: "Workspace name is required",
@@ -41,19 +54,34 @@ const SignIn = () => {
   });
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    console.log(values);
+    if (isPending) return;
+
+    mutate(values, {
+      onSuccess: (data) => {
+        const user = data.user;
+        console.log("User data: ", user);
+
+        const decodedUrl = returnUrl ? decodeURIComponent(returnUrl) : null;
+
+        navigate(decodedUrl || `/workspace/${user.currentWorkspace}`);
+      },
+      onError: (error) => {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      },
+    });
   };
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
-        <Link
-          to="/"
-          className="flex items-center gap-2 self-center font-medium"
-        >
+        <div className="flex items-center gap-2 self-center font-medium">
+          <Link to="/">Team Sync.</Link>
           <Logo />
-          Team Sync.
-        </Link>
+        </div>
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader className="text-center">
@@ -127,7 +155,12 @@ const SignIn = () => {
                           )}
                         />
                       </div>
-                      <Button type="submit" className="w-full">
+                      <Button
+                        type="submit"
+                        disabled={isPending}
+                        className="w-full"
+                      >
+                        {isPending && <Loader className="animate-spin" />}
                         Login
                       </Button>
                     </div>
