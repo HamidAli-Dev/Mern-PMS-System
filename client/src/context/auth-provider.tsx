@@ -1,9 +1,15 @@
-import { createContext, useContext, useEffect } from "react";
-import useWorkspaceId from "@/hooks/use-workspace-id";
+import { createContext, useContext } from "react";
+import { UserType, WorkspaceType } from "@/types/api.type";
+import useAuth from "@/hooks/api/use-auth";
 
 // Define the context shape
 type AuthContextType = {
-  workspaceId: string;
+  user?: UserType;
+  workspace?: WorkspaceType;
+  error: any;
+  isLoading: boolean;
+  isFetching: boolean;
+  refetchAuth: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -11,15 +17,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  //const navigate = useNavigate();
-  const workspaceId = useWorkspaceId();
+  const {
+    data: authData,
+    error: authError,
+    isLoading: authLoading,
+    isFetching,
+    refetch: refetchAuth,
+  } = useAuth();
 
-  useEffect(() => {});
+  const user = authData?.user;
 
   return (
     <AuthContext.Provider
       value={{
-        workspaceId,
+        user,
+        error: authError,
+        isLoading: authLoading,
+        isFetching,
+        refetchAuth,
       }}
     >
       {children}
