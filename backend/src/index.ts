@@ -7,10 +7,7 @@ import passport from "passport";
 import { config } from "./config/app.config";
 import connectDB from "./config/db.config";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
-import { asyncHandler } from "./middlewares/asyncHandler.middleware";
-import { BadRequestException } from "./utils/appError";
 import { HTTPSTATUS } from "./config/http.config";
-import { ErrorCodeEnum } from "./enums/error-code.enum";
 
 import "./config/passport.config"; // Passport config
 import authRoutes from "./routes/auth.route";
@@ -50,20 +47,12 @@ app.use(
 );
 
 // asyncHandler
-app.get(
-  "/",
-  asyncHandler((req: Request, res: Response, next: NextFunction) => {
-    throw new BadRequestException(
-      "This is bad request",
-      ErrorCodeEnum.AUTH_INVALID_TOKEN
-    ); // Simulate an error for testing
-
-    res.status(HTTPSTATUS.OK).json({
-      message: "Hello World",
-      data: "This is data",
-    });
-  })
-);
+app.get("/", (req: Request, res: Response, next: NextFunction) => {
+  res.status(HTTPSTATUS.OK).json({
+    message: "Hello World",
+    data: "This is data",
+  });
+});
 
 app.use(`${BASE_PATH}/auth`, authRoutes);
 app.use(`${BASE_PATH}/user`, isAuthenticated, userRoutes);
